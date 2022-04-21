@@ -3,10 +3,9 @@
 
 type User {
   id: ID!
-  name: String!
-  email: String!
+  name: String
+  email: String
   password: PasswordState
-  avatar: ImageFieldOutput
   posts(
     where: PostWhereInput! = {}
     orderBy: [PostOrderByInput!]! = []
@@ -20,46 +19,9 @@ type PasswordState {
   isSet: Boolean!
 }
 
-interface ImageFieldOutput {
-  id: ID!
-  filesize: Int!
-  width: Int!
-  height: Int!
-  extension: ImageExtension!
-  ref: String!
-  url: String!
-}
-
-enum ImageExtension {
-  jpg
-  png
-  webp
-  gif
-}
-
 input UserWhereUniqueInput {
   id: ID
   email: String
-}
-
-type LocalImageFieldOutput implements ImageFieldOutput {
-  id: ID!
-  filesize: Int!
-  width: Int!
-  height: Int!
-  extension: ImageExtension!
-  ref: String!
-  url: String!
-}
-
-type CloudImageFieldOutput implements ImageFieldOutput {
-  id: ID!
-  filesize: Int!
-  width: Int!
-  height: Int!
-  extension: ImageExtension!
-  ref: String!
-  url: String!
 }
 
 input UserWhereInput {
@@ -132,19 +94,8 @@ input UserUpdateInput {
   name: String
   email: String
   password: String
-  avatar: ImageFieldInput
   posts: PostRelateToManyForUpdateInput
 }
-
-input ImageFieldInput {
-  upload: Upload
-  ref: String
-}
-
-"""
-The `Upload` scalar type represents a file upload.
-"""
-scalar Upload
 
 input PostRelateToManyForUpdateInput {
   disconnect: [PostWhereUniqueInput!]
@@ -159,10 +110,9 @@ input UserUpdateArgs {
 }
 
 input UserCreateInput {
-  name: String! = ""
-  email: String! = ""
+  name: String
+  email: String
   password: String
-  avatar: ImageFieldInput
   posts: PostRelateToManyForCreateInput
 }
 
@@ -173,24 +123,26 @@ input PostRelateToManyForCreateInput {
 
 type Post {
   id: ID!
-  title: String!
-  publishedAt: DateTime
-  status: PostStatusType!
-  author: User
+  title: String
+  status: String
   content: Post_content_Document
-}
-
-scalar DateTime
-  @specifiedBy(url: "https://datatracker.ietf.org/doc/html/rfc3339#section-5.6")
-
-enum PostStatusType {
-  published
-  draft
+  publishDate: DateTime
+  author: User
+  tags(
+    where: TagWhereInput! = {}
+    orderBy: [TagOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [Tag!]
+  tagsCount(where: TagWhereInput! = {}): Int
 }
 
 type Post_content_Document {
   document(hydrateRelationships: Boolean! = false): JSON!
 }
+
+scalar DateTime
+  @specifiedBy(url: "https://datatracker.ietf.org/doc/html/rfc3339#section-5.6")
 
 input PostWhereUniqueInput {
   id: ID
@@ -202,9 +154,38 @@ input PostWhereInput {
   NOT: [PostWhereInput!]
   id: IDFilter
   title: StringFilter
-  publishedAt: DateTimeNullableFilter
-  status: PostStatusTypeNullableFilter
+  status: StringNullableFilter
+  publishDate: DateTimeNullableFilter
   author: UserWhereInput
+  tags: TagManyRelationFilter
+}
+
+input StringNullableFilter {
+  equals: String
+  in: [String!]
+  notIn: [String!]
+  lt: String
+  lte: String
+  gt: String
+  gte: String
+  contains: String
+  startsWith: String
+  endsWith: String
+  not: NestedStringNullableFilter
+}
+
+input NestedStringNullableFilter {
+  equals: String
+  in: [String!]
+  notIn: [String!]
+  lt: String
+  lte: String
+  gt: String
+  gte: String
+  contains: String
+  startsWith: String
+  endsWith: String
+  not: NestedStringNullableFilter
 }
 
 input DateTimeNullableFilter {
@@ -218,32 +199,39 @@ input DateTimeNullableFilter {
   not: DateTimeNullableFilter
 }
 
-input PostStatusTypeNullableFilter {
-  equals: PostStatusType
-  in: [PostStatusType!]
-  notIn: [PostStatusType!]
-  not: PostStatusTypeNullableFilter
+input TagManyRelationFilter {
+  every: TagWhereInput
+  some: TagWhereInput
+  none: TagWhereInput
 }
 
 input PostOrderByInput {
   id: OrderDirection
   title: OrderDirection
-  publishedAt: OrderDirection
   status: OrderDirection
+  publishDate: OrderDirection
 }
 
 input PostUpdateInput {
   title: String
-  publishedAt: DateTime
-  status: PostStatusType
-  author: UserRelateToOneForUpdateInput
+  status: String
   content: JSON
+  publishDate: DateTime
+  author: UserRelateToOneForUpdateInput
+  tags: TagRelateToManyForUpdateInput
 }
 
 input UserRelateToOneForUpdateInput {
   create: UserCreateInput
   connect: UserWhereUniqueInput
   disconnect: Boolean
+}
+
+input TagRelateToManyForUpdateInput {
+  disconnect: [TagWhereUniqueInput!]
+  set: [TagWhereUniqueInput!]
+  create: [TagCreateInput!]
+  connect: [TagWhereUniqueInput!]
 }
 
 input PostUpdateArgs {
@@ -253,15 +241,66 @@ input PostUpdateArgs {
 
 input PostCreateInput {
   title: String
-  publishedAt: DateTime
-  status: PostStatusType! = draft
-  author: UserRelateToOneForCreateInput
+  status: String
   content: JSON
+  publishDate: DateTime
+  author: UserRelateToOneForCreateInput
+  tags: TagRelateToManyForCreateInput
 }
 
 input UserRelateToOneForCreateInput {
   create: UserCreateInput
   connect: UserWhereUniqueInput
+}
+
+input TagRelateToManyForCreateInput {
+  create: [TagCreateInput!]
+  connect: [TagWhereUniqueInput!]
+}
+
+type Tag {
+  id: ID!
+  name: String
+  posts(
+    where: PostWhereInput! = {}
+    orderBy: [PostOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [Post!]
+  postsCount(where: PostWhereInput! = {}): Int
+}
+
+input TagWhereUniqueInput {
+  id: ID
+}
+
+input TagWhereInput {
+  AND: [TagWhereInput!]
+  OR: [TagWhereInput!]
+  NOT: [TagWhereInput!]
+  id: IDFilter
+  name: StringFilter
+  posts: PostManyRelationFilter
+}
+
+input TagOrderByInput {
+  id: OrderDirection
+  name: OrderDirection
+}
+
+input TagUpdateInput {
+  name: String
+  posts: PostRelateToManyForUpdateInput
+}
+
+input TagUpdateArgs {
+  where: TagWhereUniqueInput!
+  data: TagUpdateInput!
+}
+
+input TagCreateInput {
+  name: String
+  posts: PostRelateToManyForCreateInput
 }
 
 """
@@ -285,6 +324,12 @@ type Mutation {
   updatePosts(data: [PostUpdateArgs!]!): [Post]
   deletePost(where: PostWhereUniqueInput!): Post
   deletePosts(where: [PostWhereUniqueInput!]!): [Post]
+  createTag(data: TagCreateInput!): Tag
+  createTags(data: [TagCreateInput!]!): [Tag]
+  updateTag(where: TagWhereUniqueInput!, data: TagUpdateInput!): Tag
+  updateTags(data: [TagUpdateArgs!]!): [Tag]
+  deleteTag(where: TagWhereUniqueInput!): Tag
+  deleteTags(where: [TagWhereUniqueInput!]!): [Tag]
   endSession: Boolean!
   authenticateUserWithPassword(
     email: String!
@@ -309,8 +354,9 @@ type UserAuthenticationWithPasswordFailure {
 }
 
 input CreateInitialUserInput {
-  name: String! = ""
-  email: String! = ""
+  name: String
+  email: String
+  password: String
 }
 
 type Query {
@@ -330,6 +376,14 @@ type Query {
   ): [Post!]
   post(where: PostWhereUniqueInput!): Post
   postsCount(where: PostWhereInput! = {}): Int
+  tags(
+    where: TagWhereInput! = {}
+    orderBy: [TagOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [Tag!]
+  tag(where: TagWhereUniqueInput!): Tag
+  tagsCount(where: TagWhereInput! = {}): Int
   keystone: KeystoneMeta!
   authenticatedItem: AuthenticatedItem
 }

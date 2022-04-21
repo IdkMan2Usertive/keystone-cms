@@ -1,31 +1,33 @@
-import {config} from '@keystone-6/core';
-import {withAuth} from './auth';
-import {session} from './session';
-import {User} from './models/User';
-import {Post} from './models/Post';
-import {KeystoneContext} from '@keystone-6/core/types';
+/*
+Welcome to Keystone! This file is what keystone uses to start the app.
 
-export default config(
-  withAuth(
-    {
-      server: {
-        port: 4000,
-      },
-      db: {
-        provider: 'sqlite',
-        url: 'file:./database/sqlite.db',
-      },
-      experimental: {
-        generateNextGraphqlAPI: true,
-        generateNodeAPI: true,
-      },
-      session,
-      ui: {
-        isAccessAllowed: (context: KeystoneContext) => Boolean(context.session?.data),
-      },
-      lists: {
-        User, Post
-      },
-    }
-  )
+It looks at the default export, and expects a Keystone config object.
+
+You can find all the config options in our docs here: https://keystonejs.com/docs/apis/config
+*/
+
+import { config } from '@keystone-6/core';
+
+// Look in the schema file for how we define our lists, and how users interact with them through graphql or the Admin UI
+import { lists } from './schema';
+
+// Keystone auth is configured separately - check out the basic auth setup we are importing from our auth file.
+import { withAuth, session } from './auth';
+
+export default withAuth(
+  // Using the config function helps typescript guide you to the available options.
+  config({
+    // the db sets the database provider - we're using sqlite for the fastest startup experience
+    db: {
+      provider: 'sqlite',
+      url: 'file:./keystone.db',
+    },
+    // This config allows us to set up features of the Admin UI https://keystonejs.com/docs/apis/config#ui
+    ui: {
+      // For our starter, we check that someone has session data before letting them see the Admin UI.
+      isAccessAllowed: (context) => !!context.session?.data,
+    },
+    lists,
+    session,
+  })
 );
